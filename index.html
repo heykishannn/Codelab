@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rath Yatra Admin Panel</title>
+    <title>Festival wish Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -68,7 +68,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>रथ यात्रा एडमिन पैनल</h1>
+        <h1>त्यौहार शुभकामनाएं एडमिन पैनल</h1>
         
         <div class="tabs">
             <div class="tab active" data-tab="content">कंटेंट</div>
@@ -97,9 +97,9 @@
             
             <div class="form-group">
                 <label for="shareDescription">शेयर करने के लिए छोटा संदेश (Meta Description)</label>
-                <textarea id="shareDescription" placeholder="जगन्नाथ की कृपा बनी रहे।"></textarea>
+                <textarea id="shareDescription" placeholder="[name] की ओर से रथ यात्रा की हार्दिक शुभकामनाएं! भगवान जगन्नाथ की कृपा आप पर बनी रहे।"></textarea>
                 <div id="shareDescriptionPreview">
-                    <small>यह संदेश शेयरिंग लिंक के साथ दिखेगा।</small>
+                    <small>यह संदेश शेयरिंग लिंक के साथ दिखेगा। [name] को अपने-आप यूजर के नाम से रिप्लेस कर दिया जाएगा।</small>
                 </div>
             </div>
         </div>
@@ -113,6 +113,14 @@
             <div class="form-group">
                 <label for="musicUrl">बैकग्राउंड म्यूजिक URL</label>
                 <input type="text" id="musicUrl" placeholder="festival.mp3">
+            </div>
+            
+            <div class="form-group">
+                <label for="autoPlayMusic">ऑटो प्ले म्यूजिक</label>
+                <select id="autoPlayMusic">
+                    <option value="true">हाँ</option>
+                    <option value="false">नहीं</option>
+                </select>
             </div>
         </div>
         
@@ -214,6 +222,7 @@
         const shareDescriptionPreview = document.getElementById("shareDescriptionPreview");
         const gifUrlInput = document.getElementById("gifUrl");
         const musicUrlInput = document.getElementById("musicUrl");
+        const autoPlayMusicSelect = document.getElementById("autoPlayMusic");
         const saveBtn = document.getElementById("saveBtn");
         const resetBtn = document.getElementById("resetBtn");
         const confirmationMessage = document.getElementById("confirmation");
@@ -229,42 +238,47 @@
                 const englishWish = await getSetting("englishWish");
                 const gifUrl = await getSetting("gifUrl");
                 const musicUrl = await getSetting("musicUrl");
+                const autoPlayMusic = await getSetting("autoPlayMusic");
                 const shareDesc = await getSetting("shareDescription"); 
                 const emojis = await getSetting("emojis");
                 
                 // Update form fields
-                if (title) titleInput.value = title; else titleInput.value = ''; // Default or placeholder
-                if (hindiWish) hindiWishTextarea.value = hindiWish; else hindiWishTextarea.value = '';
-                if (englishWish) englishWishTextarea.value = englishWish; else englishWishTextarea.value = '';
+                if (title) titleInput.value = title;
+                if (hindiWish) hindiWishTextarea.value = hindiWish;
+                if (englishWish) englishWishTextarea.value = englishWish;
                 
-                if (gifUrl) gifUrlInput.value = gifUrl; else gifUrlInput.value = '';
-                if (musicUrl) musicUrlInput.value = musicUrl; else musicUrlInput.value = '';
+                if (gifUrl) gifUrlInput.value = gifUrl;
+                if (musicUrl) musicUrlInput.value = musicUrl;
+                if (autoPlayMusic !== null) autoPlayMusicSelect.value = autoPlayMusic;
                 
                 if (shareDesc) {
                     shareDescriptionTextarea.value = shareDesc;
-                    updateShareDescriptionPreview(shareDesc); // Update preview on load
-                } else {
-                    // Set a default or placeholder if no description is saved
-                    shareDescriptionTextarea.value = '';
-                    updateShareDescriptionPreview('');
+                    updateShareDescriptionPreview(shareDesc);
                 }
                 
                 // Load emoji settings
                 if (emojis) {
                     const updateEmojiInput = (id, emojiArray, index) => {
                         const input = document.getElementById(id);
-                        if (input && emojiArray && emojiArray[index] !== undefined) { // Check for undefined
+                        if (input && emojiArray && emojiArray[index] !== undefined) {
                             input.value = emojiArray[index];
                         } else {
-                            input.value = ''; // Clear if not found
+                            input.value = '';
                         }
                     };
                     
                     if (emojis.flowers) {
-                        updateEmojiInput("flower1", emojis.flowers, 0); updateEmojiInput("flower2", emojis.flowers, 1); updateEmojiInput("flower3", emojis.flowers, 2); updateEmojiInput("flower4", emojis.flowers, 3); updateEmojiInput("flower5", emojis.flowers, 4);
+                        updateEmojiInput("flower1", emojis.flowers, 0); 
+                        updateEmojiInput("flower2", emojis.flowers, 1); 
+                        updateEmojiInput("flower3", emojis.flowers, 2); 
+                        updateEmojiInput("flower4", emojis.flowers, 3); 
+                        updateEmojiInput("flower5", emojis.flowers, 4);
                     }
                     if (emojis.diyas) {
-                        updateEmojiInput("diya1", emojis.diyas, 0); updateEmojiInput("diya2", emojis.diyas, 1); updateEmojiInput("diya3", emojis.diyas, 2); updateEmojiInput("diya4", emojis.diyas, 3);
+                        updateEmojiInput("diya1", emojis.diyas, 0); 
+                        updateEmojiInput("diya2", emojis.diyas, 1); 
+                        updateEmojiInput("diya3", emojis.diyas, 2); 
+                        updateEmojiInput("diya4", emojis.diyas, 3);
                     }
                     if (emojis.rangolis) {
                         updateEmojiInput("rangoli1", emojis.rangolis, 0);
@@ -286,6 +300,7 @@
                 const englishWish = englishWishTextarea.value;
                 const gifUrl = gifUrlInput.value;
                 const musicUrl = musicUrlInput.value;
+                const autoPlayMusic = autoPlayMusicSelect.value;
                 const shareDesc = shareDescriptionTextarea.value; 
                 
                 const emojis = {
@@ -313,6 +328,7 @@
                 await updateSetting("englishWish", englishWish);
                 await updateSetting("gifUrl", gifUrl);
                 await updateSetting("musicUrl", musicUrl);
+                await updateSetting("autoPlayMusic", autoPlayMusic);
                 await updateSetting("shareDescription", shareDesc); 
                 await updateSetting("emojis", emojis);
                 
@@ -343,9 +359,10 @@
         // Update preview for share description
         function updateShareDescriptionPreview(value) {
             if (value) {
-                shareDescriptionPreview.innerHTML = `<strong>प्रीव्यू:</strong> ${value.substring(0, 80)}${value.length > 80 ? '...' : ''}`;
+                const previewText = value.replace("[name]", "आपका नाम");
+                shareDescriptionPreview.innerHTML = `<strong>प्रीव्यू:</strong> ${previewText.substring(0, 80)}${previewText.length > 80 ? '...' : ''}`;
             } else {
-                shareDescriptionPreview.innerHTML = `<small>यह संदेश शेयरिंग लिंक के साथ दिखेगा।</small>`;
+                shareDescriptionPreview.innerHTML = `<small>यह संदेश शेयरिंग लिंक के साथ दिखेगा। [name] को अपने-आप यूजर के नाम से रिप्लेस कर दिया जाएगा।</small>`;
             }
         }
 
