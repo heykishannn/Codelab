@@ -82,42 +82,16 @@
                 <input type="text" id="title" placeholder="रथ यात्रा की हार्दिक शुभकामनाएं 🙏🎉">
             </div>
             
-            <!-- Wish 1 -->
+            <!-- Main Wish -->
             <div class="wish-textarea-group">
                 <div class="form-group">
-                    <label for="wish1Hindi">मुख्य विश (हिंदी)</label>
-                    <textarea id="wish1Hindi" placeholder="जय जगन्नाथ! 🙏 भगवान जगन्नाथ, बलभद्र और सुभद्रा जी की कृपा आप पर बनी रहे। ✨<br><br>इस पावन रथ यात्रा पर्व पर हम आपके लिए मंगल कामनाएं करते हैं। 🎊<br><br>भगवान आपके जीवन को सुख, शांति और समृद्धि से भर दें। 🌟🚩"></textarea>
+                    <label for="hindiWish">मुख्य विश (हिंदी)</label>
+                    <textarea id="hindiWish" placeholder="जय जगन्नाथ! 🙏 भगवान जगन्नाथ, बलभद्र और सुभद्रा जी की कृपा आप पर बनी रहे। ✨<br><br>इस पावन रथ यात्रा पर्व पर हम आपके लिए मंगल कामनाएं करते हैं। 🎊<br><br>भगवान आपके जीवन को सुख, शांति और समृद्धि से भर दें। 🌟🚩"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="wish1English">मुख्य विश (अंग्रेजी)</label>
-                    <textarea id="wish1English" placeholder="Jay Jagannath! 🙏 May Lord Jagannath, Balabhadra and Subhadra bless you. ✨<br><br>On this auspicious occasion of Rath Yatra, we extend our heartfelt wishes to you. 🎊<br><br>May God fill your life with happiness, peace and prosperity. 🌟🚩"></textarea>
-                </div>
-            </div>
-
-            <!-- Wish 2 -->
-            <div class="wish-textarea-group">
-                <div class="form-group">
-                    <label for="wish2Hindi">दूसरी विश (हिंदी) - (जैसे 'Kishan से...' वाला मैसेज)</label>
-                    <textarea id="wish2Hindi" placeholder="Kishan से आप सभी को रथ यात्रा के पावन अवसर पर ढेरों मंगलकामनाएं!"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="wish2English">दूसरी विश (अंग्रेजी)</label>
-                    <textarea id="wish2English" placeholder="Kishan wishes you all a very happy and auspicious occasion of Rath Yatra!"></textarea>
-                </div>
-            </div>
-
-            <!-- Wish 3 -->
-            <div class="wish-textarea-group">
-                <div class="form-group">
-                    <label for="wish3Hindi">तीसरी विश (हिंदी) - (जैसे 'भगवान जगन्नाथ की कृपा...' वाला मैसेज)</label>
-                    <textarea id="wish3Hindi" placeholder="भगवान जगन्नाथ, बलभद्र और माता सुभद्रा की कृपा आप और आपके परिवार पर सदैव बनी रहे। आपका जीवन सुख, समृद्धि और स्वास्थ्य से भरा रहे।"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="wish3English">तीसरी विश (अंग्रेजी)</label>
-                    <textarea id="wish3English" placeholder="May the blessings of Lord Jagannath, Balabhadra and Mata Subhadra be with you and your family always. May your life be filled with happiness, prosperity, and good health."></textarea>
+                    <label for="englishWish">मुख्य विश (अंग्रेजी)</label>
+                    <textarea id="englishWish" placeholder="Jay Jagannath! 🙏 May Lord Jagannath, Balabhadra and Subhadra bless you. ✨<br><br>On this auspicious occasion of Rath Yatra, we extend our heartfelt wishes to you. 🎊<br><br>May God fill your life with happiness, peace and prosperity. 🌟🚩"></textarea>
                 </div>
             </div>
             
@@ -182,6 +156,7 @@
     </div>
 
     <script>
+        // IndexedDB Initialization and Functions (common to both files)
         let db;
         const dbName = "RathYatraDB";
         const storeName = "PageSettings";
@@ -230,13 +205,11 @@
             });
         }
 
+        // --- Admin Panel Specific JavaScript ---
+
         const titleInput = document.getElementById("title");
-        const wish1HindiTextarea = document.getElementById("wish1Hindi");
-        const wish1EnglishTextarea = document.getElementById("wish1English");
-        const wish2HindiTextarea = document.getElementById("wish2Hindi");
-        const wish2EnglishTextarea = document.getElementById("wish2English");
-        const wish3HindiTextarea = document.getElementById("wish3Hindi");
-        const wish3EnglishTextarea = document.getElementById("wish3English");
+        const hindiWishTextarea = document.getElementById("hindiWish");
+        const englishWishTextarea = document.getElementById("englishWish");
         const shareDescriptionTextarea = document.getElementById("shareDescription");
         const shareDescriptionPreview = document.getElementById("shareDescriptionPreview");
         const gifUrlInput = document.getElementById("gifUrl");
@@ -245,79 +218,116 @@
         const resetBtn = document.getElementById("resetBtn");
         const confirmationMessage = document.getElementById("confirmation");
         
+        // Load settings into form
         async function loadSettings() {
             try {
                 await initDB();
                 
+                // Load general settings
                 const title = await getSetting("title");
-                const wish1Hindi = await getSetting("wish1Hindi"); const wish1English = await getSetting("wish1English");
-                const wish2Hindi = await getSetting("wish2Hindi"); const wish2English = await getSetting("wish2English");
-                const wish3Hindi = await getSetting("wish3Hindi"); const wish3English = await getSetting("wish3English");
-                const gifUrl = await getSetting("gifUrl"); const musicUrl = await getSetting("musicUrl");
+                const hindiWish = await getSetting("hindiWish");
+                const englishWish = await getSetting("englishWish");
+                const gifUrl = await getSetting("gifUrl");
+                const musicUrl = await getSetting("musicUrl");
                 const shareDesc = await getSetting("shareDescription"); 
                 const emojis = await getSetting("emojis");
                 
-                if (title) titleInput.value = title;
-                if (wish1Hindi) wish1HindiTextarea.value = wish1Hindi; else wish1HindiTextarea.value = '';
-                if (wish1English) wish1EnglishTextarea.value = wish1English; else wish1EnglishTextarea.value = '';
+                // Update form fields
+                if (title) titleInput.value = title; else titleInput.value = ''; // Default or placeholder
+                if (hindiWish) hindiWishTextarea.value = hindiWish; else hindiWishTextarea.value = '';
+                if (englishWish) englishWishTextarea.value = englishWish; else englishWishTextarea.value = '';
                 
-                if (wish2Hindi) wish2HindiTextarea.value = wish2Hindi; else wish2HindiTextarea.value = '';
-                if (wish2English) wish2EnglishTextarea.value = wish2English; else wish2EnglishTextarea.value = '';
+                if (gifUrl) gifUrlInput.value = gifUrl; else gifUrlInput.value = '';
+                if (musicUrl) musicUrlInput.value = musicUrl; else musicUrlInput.value = '';
                 
-                if (wish3Hindi) wish3HindiTextarea.value = wish3Hindi; else wish3HindiTextarea.value = '';
-                if (wish3English) wish3EnglishTextarea.value = wish3English; else wish3EnglishTextarea.value = '';
-                
-                if (gifUrl) gifUrlInput.value = gifUrl;
-                if (musicUrl) musicUrlInput.value = musicUrl;
                 if (shareDesc) {
                     shareDescriptionTextarea.value = shareDesc;
-                    updateShareDescriptionPreview(shareDesc);
+                    updateShareDescriptionPreview(shareDesc); // Update preview on load
+                } else {
+                    // Set a default or placeholder if no description is saved
+                    shareDescriptionTextarea.value = '';
+                    updateShareDescriptionPreview('');
                 }
                 
+                // Load emoji settings
                 if (emojis) {
-                    const updateEmojiInput = (id, emojiArray, index) => { const input = document.getElementById(id); if (input && emojiArray && emojiArray[index]) { input.value = emojiArray[index]; } };
-                    if (emojis.flowers) { updateEmojiInput("flower1", emojis.flowers, 0); updateEmojiInput("flower2", emojis.flowers, 1); updateEmojiInput("flower3", emojis.flowers, 2); updateEmojiInput("flower4", emojis.flowers, 3); updateEmojiInput("flower5", emojis.flowers, 4); }
-                    if (emojis.diyas) { updateEmojiInput("diya1", emojis.diyas, 0); updateEmojiInput("diya2", emojis.diyas, 1); updateEmojiInput("diya3", emojis.diyas, 2); updateEmojiInput("diya4", emojis.diyas, 3); }
-                    if (emojis.rangolis) { updateEmojiInput("rangoli1", emojis.rangolis, 0); updateEmojiInput("rangoli2", emojis.rangolis, 1); }
+                    const updateEmojiInput = (id, emojiArray, index) => {
+                        const input = document.getElementById(id);
+                        if (input && emojiArray && emojiArray[index] !== undefined) { // Check for undefined
+                            input.value = emojiArray[index];
+                        } else {
+                            input.value = ''; // Clear if not found
+                        }
+                    };
+                    
+                    if (emojis.flowers) {
+                        updateEmojiInput("flower1", emojis.flowers, 0); updateEmojiInput("flower2", emojis.flowers, 1); updateEmojiInput("flower3", emojis.flowers, 2); updateEmojiInput("flower4", emojis.flowers, 3); updateEmojiInput("flower5", emojis.flowers, 4);
+                    }
+                    if (emojis.diyas) {
+                        updateEmojiInput("diya1", emojis.diyas, 0); updateEmojiInput("diya2", emojis.diyas, 1); updateEmojiInput("diya3", emojis.diyas, 2); updateEmojiInput("diya4", emojis.diyas, 3);
+                    }
+                    if (emojis.rangolis) {
+                        updateEmojiInput("rangoli1", emojis.rangolis, 0);
+                        updateEmojiInput("rangoli2", emojis.rangolis, 1);
+                    }
                 }
             } catch (error) {
                 console.error("Error loading settings:", error);
             }
         }
         
+        // Save settings from form
         async function saveSettings() {
             try {
                 await initDB();
                 
                 const title = titleInput.value;
-                const wish1Hindi = wish1HindiTextarea.value; const wish1English = wish1EnglishTextarea.value;
-                const wish2Hindi = wish2HindiTextarea.value; const wish2English = wish2EnglishTextarea.value;
-                const wish3Hindi = wish3HindiTextarea.value; const wish3English = wish3EnglishTextarea.value;
-                const gifUrl = gifUrlInput.value; const musicUrl = musicUrlInput.value;
+                const hindiWish = hindiWishTextarea.value;
+                const englishWish = englishWishTextarea.value;
+                const gifUrl = gifUrlInput.value;
+                const musicUrl = musicUrlInput.value;
                 const shareDesc = shareDescriptionTextarea.value; 
                 
                 const emojis = {
-                    flowers: [document.getElementById("flower1").value, document.getElementById("flower2").value, document.getElementById("flower3").value, document.getElementById("flower4").value, document.getElementById("flower5").value],
-                    diyas: [document.getElementById("diya1").value, document.getElementById("diya2").value, document.getElementById("diya3").value, document.getElementById("diya4").value],
-                    rangolis: [document.getElementById("rangoli1").value, document.getElementById("rangoli2").value]
+                    flowers: [
+                        document.getElementById("flower1").value,
+                        document.getElementById("flower2").value,
+                        document.getElementById("flower3").value,
+                        document.getElementById("flower4").value,
+                        document.getElementById("flower5").value
+                    ],
+                    diyas: [
+                        document.getElementById("diya1").value,
+                        document.getElementById("diya2").value,
+                        document.getElementById("diya3").value,
+                        document.getElementById("diya4").value
+                    ],
+                    rangolis: [
+                        document.getElementById("rangoli1").value,
+                        document.getElementById("rangoli2").value
+                    ]
                 };
                 
                 await updateSetting("title", title);
-                await updateSetting("wish1Hindi", wish1Hindi); await updateSetting("wish1English", wish1English);
-                await updateSetting("wish2Hindi", wish2Hindi); await updateSetting("wish2English", wish2English);
-                await updateSetting("wish3Hindi", wish3Hindi); await updateSetting("wish3English", wish3English);
-                await updateSetting("gifUrl", gifUrl); await updateSetting("musicUrl", musicUrl);
+                await updateSetting("hindiWish", hindiWish);
+                await updateSetting("englishWish", englishWish);
+                await updateSetting("gifUrl", gifUrl);
+                await updateSetting("musicUrl", musicUrl);
                 await updateSetting("shareDescription", shareDesc); 
                 await updateSetting("emojis", emojis);
                 
+                // Show confirmation
                 confirmationMessage.style.display = "block";
-                setTimeout(() => { confirmationMessage.style.display = "none"; }, 3000);
+                setTimeout(() => {
+                    confirmationMessage.style.display = "none";
+                }, 3000);
             } catch (error) {
                 console.error("Error saving settings:", error);
                 alert("सेटिंग्स सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
             }
         }
         
+        // Reset to default settings
         async function resetSettings() {
             if (confirm("क्या आप वाकई डिफॉल्ट सेटिंग्स पर वापस जाना चाहते हैं? यह सभी वर्तमान सेटिंग्स हटा देगा।")) {
                 try {
@@ -330,6 +340,7 @@
             }
         }
         
+        // Update preview for share description
         function updateShareDescriptionPreview(value) {
             if (value) {
                 shareDescriptionPreview.innerHTML = `<strong>प्रीव्यू:</strong> ${value.substring(0, 80)}${value.length > 80 ? '...' : ''}`;
@@ -338,6 +349,7 @@
             }
         }
 
+        // Tab functionality
         function setupTabs() {
             const tabs = document.querySelectorAll(".tab");
             const tabContents = document.querySelectorAll(".tab-content");
@@ -353,6 +365,7 @@
             });
         }
         
+        // Initialize the admin panel
         document.addEventListener("DOMContentLoaded", function() {
             loadSettings();
             setupTabs();
@@ -360,6 +373,7 @@
             saveBtn.addEventListener("click", saveSettings);
             resetBtn.addEventListener("click", resetSettings);
             
+            // Real-time preview for share description
             shareDescriptionTextarea.addEventListener('input', function() {
                 updateShareDescriptionPreview(this.value);
             });
