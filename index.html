@@ -1,0 +1,756 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Wish Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6a1b9a;
+            --secondary: #ab47bc;
+            --danger: #ef5350;
+            --success: #26a69a;
+            --dark: #263238;
+            --light: #fafafa;
+            --gray: #78909c;
+            --accent: #ffca28;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #eceff1, #cfd8dc);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: var(--light);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 2.2rem;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+        }
+
+        .form-group { margin-bottom: 25px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(106, 27, 154, 0.2);
+            outline: none;
+            transform: scale(1.02);
+        }
+
+        textarea { min-height: 100px; resize: vertical; }
+
+        #shareDescriptionPreview, #backgroundPreview {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+            padding: 10px;
+            background: #f5f7fa;
+            border-radius: 8px;
+        }
+
+        .emoji-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .emoji-inputs input {
+            text-align: center;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .emoji-inputs input:focus {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(106, 27, 154, 0.3);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(106, 27, 154, 0.4);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, var(--danger), #d81b60);
+            box-shadow: 0 5px 15px rgba(239, 83, 80, 0.3);
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #d81b60, var(--danger));
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.4);
+        }
+
+        .confirmation {
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--success);
+            color: #fff;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--gray);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .tab:hover:not(.active) { color: var(--dark); }
+
+        .tab-content { display: none; }
+
+        .tab-content.active { display: block; }
+
+        .file-upload-wrapper {
+            border: 2px dashed #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .file-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: rgba(106, 27, 154, 0.05);
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            font-size: 1rem;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .file-upload-hint {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-top: 10px;
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(106, 27, 154, 0.1);
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .preview-container {
+            margin-top: 15px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        .preview-container img, .preview-container video, .preview-container audio {
+            width: 100%;
+            display: block;
+        }
+
+        .preview-container audio {
+            padding: 10px;
+            background: #f5f7fa;
+        }
+
+        .background-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .background-option {
+            padding: 8px 15px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .background-option.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            h1 { font-size: 2rem; }
+            .tab { font-size: 0.9rem; padding: 8px 15px; }
+            .emoji-inputs { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .tab { font-size: 0.8rem; padding: 6px 10px; }
+            .emoji-inputs { grid-template-columns: repeat(3, 1fr); }
+            .btn { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-cog"></i> Festival Wish Admin</h1>
+        <div class="tabs">
+            <div class="tab active" data-tab="content">कंटेंट</div>
+            <div class="tab" data-tab="media">मीडिया</div>
+            <div class="tab" data-tab="emojis">इमोजी</div>
+            <div class="tab" data-tab="effects">इफेक्ट्स</div>
+        </div>
+        <div class="tab-content active" id="content-tab">
+            <div class="form-group">
+                <label for="title"><i class="fas fa-heading"></i> पेज टाइटल</label>
+                <input type="text" id="title" placeholder="उत्सव की शुभकामनाएं">
+            </div>
+            <div class="form-group">
+                <label for="hindiWish"><i class="fas fa-language"></i> हिंदी विश</label>
+                <textarea id="hindiWish" placeholder="हिंदी में शुभकामनाएं लिखें"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="englishWish"><i class="fas fa-language"></i> अंग्रेजी विश</label>
+                <textarea id="englishWish" placeholder="Enter wishes in English"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="shareDescription"><i class="fas fa-share-alt"></i> शेयर डिस्क्रिप्शन</label>
+                <textarea id="shareDescription" placeholder="उत्सव की शुभकामनाएं साझा करें"></textarea>
+                <div id="shareDescriptionPreview"></div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> बैकग्राउंड सेट करें</label>
+                <div class="background-options">
+                    <div class="background-option active" data-bg-type="color">रंग</div>
+                    <div class="background-option" data-bg-type="gradient">ग्रेडिएंट</div>
+                    <div class="background-option" data-bg-type="image">इमेज</div>
+                </div>
+                <input type="text" id="backgroundValue" placeholder="उदा: #ffffff, linear-gradient(90deg, #ff6b6b, #4ecdc4), या https://example.com/festival-bg.jpg">
+                <div id="backgroundPreview"></div>
+            </div>
+        </div>
+        <div class="tab-content" id="media-tab">
+            <div class="form-group">
+                <label><i class="fas fa-images"></i> इमेज/वीडियो अपलोड</label>
+                <div class="file-upload-wrapper" id="visualMediaUploadWrapper">
+                    <div class="file-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <div class="file-upload-text">क्लिक करें या फाइल ड्रॉप करें</div>
+                    <div class="file-upload-hint">JPG, PNG, GIF, MP4 (मैक्स 5MB)</div>
+                    <input type="file" id="visualMediaFile" accept=".jpg,.jpeg,.png,.gif,.mp4">
+                    <span class="file-name" id="visualMediaFileName">कोई फाइल नहीं चुनी गई</span>
+                </div>
+                <div class="preview-container" id="visualMediaPreview"></div>
+                <input type="hidden" id="visualMediaType">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-music"></i> ऑडियो अपलोड</label>
+                <div class="file-upload-wrapper" id="audioMediaUploadWrapper">
+                    <div class="file-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <div class="file-upload-text">क्लिक करें या ऑडियो ड्रॉप करें</div>
+                    <div class="file-upload-hint">MP3 (मैक्स 5MB)</div>
+                    <input type="file" id="audioMediaFile" accept=".mp3">
+                    <span class="file-name" id="audioMediaFileName">कोई फाइल नहीं चुनी गई</span>
+                </div>
+                <div class="preview-container" id="audioMediaPreview"></div>
+                <input type="hidden" id="audioMediaType">
+            </div>
+            <div class="form-group">
+                <label for="autoPlayMedia"><i class="fas fa-play"></i> ऑटो प्ले</label>
+                <select id="autoPlayMedia">
+                    <option value="true">हाँ</option>
+                    <option value="false">नहीं</option>
+                </select>
+            </div>
+        </div>
+        <div class="tab-content" id="emojis-tab">
+            <div class="form-group">
+                <label><i class="fas fa-smile"></i> फूल इमोजी (5)</label>
+                <div class="emoji-inputs">
+                    <input type="text" id="flower1" placeholder="🌸" maxlength="2">
+                    <input type="text" id="flower2" placeholder="🪷" maxlength="2">
+                    <input type="text" id="flower3" placeholder="🌼" maxlength="2">
+                    <input type="text" id="flower4" placeholder="🌺" maxlength="2">
+                    <input type="text" id="flower5" placeholder="🏵️" maxlength="2">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-fire"></i> दीया इमोजी (4)</label>
+                <div class="emoji-inputs">
+                    <input type="text" id="diya1" placeholder="🪔" maxlength="2">
+                    <input type="text" id="diya2" placeholder="🪔" maxlength="2">
+                    <input type="text" id="diya3" placeholder="🪔" maxlength="2">
+                    <input type="text" id="diya4" placeholder="🪔" maxlength="2">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-star"></i> रंगोली इमोजी (2)</label>
+                <div class="emoji-inputs">
+                    <input type="text" id="rangoli1" placeholder="🕉️" maxlength="2">
+                    <input type="text" id="rangoli2" placeholder="ॐ" maxlength="2">
+                </div>
+            </div>
+        </div>
+        <div class="tab-content" id="effects-tab">
+            <div class="form-group">
+                <label><i class="fas fa-magic"></i> फेस्टिवल इफेक्ट्स</label>
+                <select id="effectEmojis">
+                    <option value="flowers">फूल</option>
+                    <option value="diyas">दीया</option>
+                    <option value="rangoli">रंगोली</option>
+                    <option value="mixed">मिक्स्ड</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-film"></i> एनिमेशन स्टाइल</label>
+                <select id="effectAnimation">
+                    <option value="fall">फॉल</option>
+                    <option value="spin">स्पिन</option>
+                    <option value="bounce">बाउंस</option>
+                    <option value="fade">फेड</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-tachometer-alt"></i> एनिमेशन स्पीड (सेकंड्स)</label>
+                <input type="number" id="effectSpeed" min="1" max="10" value="5">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-toggle-on"></i> इफेक्ट्स इनेबल</label>
+                <select id="effectEnabled">
+                    <option value="true">हाँ</option>
+                    <option value="false">नहीं</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn" id="saveBtn"><i class="fas fa-save"></i> सेटिंग्स सेव करें</button>
+        <button class="btn reset-btn" id="resetBtn"><i class="fas fa-trash-alt"></i> रीसेट करें</button>
+        <div class="confirmation" id="confirmation"><i class="fas fa-check-circle"></i> सेटिंग्स सेव हो गई!</div>
+    </div>
+    <script>
+        let db;
+        const dbName = "RathYatraDB";
+        const storeName = "PageSettings";
+        let visualMediaData = null;
+        let audioMediaData = null;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 3);
+                request.onerror = () => reject("Database error");
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName, { keyPath: "id" });
+                    }
+                };
+            });
+        }
+
+        function getSetting(key) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction([storeName], "readonly");
+                const store = transaction.objectStore(storeName);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result ? request.result.value : null);
+            });
+        }
+
+        function updateSetting(key, value) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], "readwrite");
+                const store = transaction.objectStore(storeName);
+                const request = store.put({ id: key, value: value });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject("Error saving setting");
+            });
+        }
+
+        function clearAllSettings() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], "readwrite");
+                const store = transaction.objectStore(storeName);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject("Error clearing settings");
+            });
+        }
+
+        function handleFileUpload(fileInput, fileNameElement, previewElement, typeInput, acceptTypes) {
+            fileInput.addEventListener('change', (e) => {
+                e.stopPropagation();
+                const file = e.target.files[0];
+                if (!file) {
+                    fileNameElement.textContent = 'कोई फाइल नहीं चुनी गई';
+                    previewElement.innerHTML = '';
+                    typeInput.value = '';
+                    if (acceptTypes.includes('image')) visualMediaData = null;
+                    else audioMediaData = null;
+                    updateSetting(acceptTypes.includes('image') ? 'visualMedia' : 'audioMedia', null);
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("फाइल साइज़ 5MB से कम होनी चाहिए");
+                    fileInput.value = '';
+                    return;
+                }
+                fileNameElement.textContent = file.name;
+                let mediaType = acceptTypes.includes('image') && file.type.startsWith('image/') ? 'image' :
+                                acceptTypes.includes('video') && file.type.startsWith('video/') ? 'video' :
+                                acceptTypes.includes('audio') && file.type.startsWith('audio/') ? 'audio' : '';
+                typeInput.value = mediaType;
+                const objectUrl = URL.createObjectURL(file);
+                previewElement.innerHTML = mediaType === 'image' ? `<img src="${objectUrl}" alt="Preview">` :
+                                          mediaType === 'video' ? `<video controls src="${objectUrl}"></video>` :
+                                          mediaType === 'audio' ? `<audio controls src="${objectUrl}"></audio>` : '';
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = { data: e.target.result, type: file.type, name: file.name };
+                    if (acceptTypes.includes('image')) visualMediaData = data;
+                    else audioMediaData = data;
+                    updateSetting(acceptTypes.includes('image') ? 'visualMedia' : 'audioMedia', data);
+                };
+                reader.readAsDataURL(file);
+            });
+            fileInput.parentElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.click();
+            });
+        }
+
+        async function loadSettings() {
+            const settings = [
+                'title', 'hindiWish', 'englishWish', 'shareDescription', 'visualMedia', 'audioMedia',
+                'autoPlayMedia', 'emojis', 'effects', 'background'
+            ];
+            for (const key of settings) {
+                const value = await getSetting(key);
+                if (!value) continue;
+                switch (key) {
+                    case 'title':
+                    case 'hindiWish':
+                    case 'englishWish':
+                    case 'shareDescription':
+                        document.getElementById(key).value = value;
+                        if (key === 'shareDescription') {
+                            document.getElementById('shareDescriptionPreview').textContent = value || 'उत्सव की शुभकामनाएं साझा करें';
+                        }
+                        break;
+                    case 'autoPlayMedia':
+                        document.getElementById('autoPlayMedia').value = value;
+                        break;
+                    case 'emojis':
+                        ['flower1', 'flower2', 'flower3', 'flower4', 'flower5'].forEach((id, i) => {
+                            document.getElementById(id).value = value.flowers[i] || '';
+                        });
+                        ['diya1', 'diya2', 'diya3', 'diya4'].forEach((id, i) => {
+                            document.getElementById(id).value = value.diyas[i] || '';
+                        });
+                        ['rangoli1', 'rangoli2'].forEach((id, i) => {
+                            document.getElementById(id).value = value.rangoli[i] || '';
+                        });
+                        break;
+                    case 'effects':
+                        document.getElementById('effectEmojis').value = value.type || 'mixed';
+                        document.getElementById('effectAnimation').value = value.animation || 'fall';
+                        document.getElementById('effectSpeed').value = value.speed || 5;
+                        document.getElementById('effectEnabled').value = value.enabled || 'true';
+                        break;
+                    case 'background':
+                        document.querySelector(`.background-option[data-bg-type="${value.type}"]`).classList.add('active');
+                        document.querySelectorAll('.background-option').forEach(opt => {
+                            if (opt.dataset.bgType !== value.type) opt.classList.remove('active');
+                        });
+                        document.getElementById('backgroundValue').value = value.value || '';
+                        document.getElementById('backgroundPreview').textContent = `प्रकार: ${value.type === 'color' ? 'रंग' : value.type === 'gradient' ? 'ग्रेडिएंट' : 'इमेज'} | मान: ${value.value || 'डिफ़ॉल्ट'}`;
+                        break;
+                    case 'visualMedia':
+                        if (value) {
+                            visualMediaData = value;
+                            document.getElementById('visualMediaFileName').textContent = value.name || 'फाइल चुनी गई';
+                            document.getElementById('visualMediaType').value = value.type.startsWith('image') ? 'image' : 'video';
+                            document.getElementById('visualMediaPreview').innerHTML = value.type.startsWith('image') ? `<img src="${value.data}" alt="Preview">` :
+                                                                                   `<video controls src="${value.data}"></video>`;
+                        }
+                        break;
+                    case 'audioMedia':
+                        if (value) {
+                            audioMediaData = value;
+                            document.getElementById('audioMediaFileName').textContent = value.name || 'फाइल चुनी गई';
+                            document.getElementById('audioMediaType').value = 'audio';
+                            document.getElementById('audioMediaPreview').innerHTML = `<audio controls src="${value.data}"></audio>`;
+                        }
+                        break;
+                }
+            }
+        }
+
+        async function initAdmin() {
+            await initDB();
+            await loadSettings();
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const saveBtn = document.getElementById('saveBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const confirmation = document.getElementById('confirmation');
+            const shareDescription = document.getElementById('shareDescription');
+            const shareDescriptionPreview = document.getElementById('shareDescriptionPreview');
+            const backgroundValue = document.getElementById('backgroundValue');
+            const backgroundPreview = document.getElementById('backgroundPreview');
+            const backgroundOptions = document.querySelectorAll('.background-option');
+            let bgType = document.querySelector('.background-option.active').dataset.bgType || 'color';
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+
+            shareDescription.addEventListener('input', () => {
+                const value = shareDescription.value;
+                shareDescriptionPreview.textContent = value || 'उत्सव की शुभकामनाएं साझा करें';
+                updateSetting('shareDescription', value);
+            });
+
+            backgroundOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    backgroundOptions.forEach(op => op.classList.remove('active'));
+                    opt.classList.add('active');
+                    bgType = opt.dataset.bgType;
+                    backgroundPreview.textContent = `प्रकार: ${bgType === 'color' ? 'रंग' : bgType === 'gradient' ? 'ग्रेडिएंट' : 'इमेज'} | मान: ${backgroundValue.value || 'डिफ़ॉल्ट'}`;
+                    updateSetting('background', { type: bgType, value: backgroundValue.value });
+                });
+            });
+
+            backgroundValue.addEventListener('input', () => {
+                const value = backgroundValue.value;
+                backgroundPreview.textContent = `प्रकार: ${bgType === 'color' ? 'रंग' : bgType === 'gradient' ? 'ग्रेडिएंट' : 'इमेज'} | मान: ${value || 'डिफ़ॉल्ट'}`;
+                updateSetting('background', { type: bgType, value });
+            });
+
+            const inputs = document.querySelectorAll('input[type="text"], textarea, select, input[type="number"]');
+            inputs.forEach(input => {
+                if (input.id === 'backgroundValue' || input.id === 'shareDescription') return;
+                input.addEventListener('input', () => {
+                    if (input.id.startsWith('flower') || input.id.startsWith('diya') || input.id.startsWith('rangoli')) {
+                        const emojis = {
+                            flowers: ['flower1', 'flower2', 'flower3', 'flower4', 'flower5'].map(id => document.getElementById(id).value),
+                            diyas: ['diya1', 'diya2', 'diya3', 'diya4'].map(id => document.getElementById(id).value),
+                            rangoli: ['rangoli1', 'rangoli2'].map(id => document.getElementById(id).value)
+                        };
+                        updateSetting('emojis', emojis);
+                    } else if (input.id.startsWith('effect')) {
+                        const effects = {
+                            type: document.getElementById('effectEmojis').value,
+                            animation: document.getElementById('effectAnimation').value,
+                            speed: document.getElementById('effectSpeed').value,
+                            enabled: document.getElementById('effectEnabled').value
+                        };
+                        updateSetting('effects', effects);
+                    } else {
+                        updateSetting(input.id, input.value);
+                    }
+                });
+            });
+
+            const visualMediaFile = document.getElementById('visualMediaFile');
+            const visualMediaFileName = document.getElementById('visualMediaFileName');
+            const visualMediaPreview = document.getElementById('visualMediaPreview');
+            const visualMediaType = document.getElementById('visualMediaType');
+            const audioMediaFile = document.getElementById('audioMediaFile');
+            const audioMediaFileName = document.getElementById('audioMediaFileName');
+            const audioMediaPreview = document.getElementById('audioMediaPreview');
+            const audioMediaType = document.getElementById('audioMediaType');
+
+            handleFileUpload(visualMediaFile, visualMediaFileName, visualMediaPreview, visualMediaType, ['image', 'video']);
+            handleFileUpload(audioMediaFile, audioMediaFileName, audioMediaPreview, audioMediaType, ['audio']);
+
+            saveBtn.addEventListener('click', async () => {
+                confirmation.style.display = 'block';
+                setTimeout(() => confirmation.style.display = 'none', 2500);
+            });
+
+            resetBtn.addEventListener('click', async () => {
+                await clearAllSettings();
+                document.querySelectorAll('input, textarea, select').forEach(el => el.value = '');
+                visualMediaFileName.textContent = 'कोई फाइल नहीं चुनी गई';
+                visualMediaPreview.innerHTML = '';
+                audioMediaFileName.textContent = 'कोई फाइल नहीं चुनी गई';
+                audioMediaPreview.innerHTML = '';
+                visualMediaData = null;
+                audioMediaData = null;
+                shareDescriptionPreview.textContent = 'उत्सव की शुभकामनाएं साझा करें';
+                backgroundPreview.textContent = 'प्रकार: रंग | मान: डिफ़ॉल्ट';
+                document.querySelector('.background-option[data-bg-type="color"]').classList.add('active');
+                document.querySelectorAll('.background-option[data-bg-type="gradient"], .background-option[data-bg-type="image"]').forEach(opt => opt.classList.remove('active'));
+                confirmation.textContent = 'सेटिंग्स रीसेट हो गई!';
+                confirmation.style.display = 'block';
+                setTimeout(() => confirmation.style.display = 'none', 2500);
+            });
+        }
+
+        initAdmin();
+    </script>
+</body>
+</html>
